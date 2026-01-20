@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String          @id @default(uuid())
+  name           String
+  email          String
+  password       String
+  role           Role?
+  created_at     DateTime        @default(now())
+  contests       Contest[]
+  mcqSubmissions McqSubmission[]
+  dsaSubmissions DsaSubmission[]
+}
+
+model Contest {
+  id           String         @id @default(uuid())
+  title        String
+  description  String
+  start_time   DateTime
+  end_time     DateTime
+  created_at   DateTime       @default(now())
+  mcqQuestions McqQuestions[]
+  dsaProblems  DsaProblems[]
+  creator_id   String
+  user         User           @relation(fields: [creator_id], references: [id])
+}
+
+model McqQuestions {
+  id                   String          @id @default(uuid())
+  question_text        String
+  points               Int             @default(1)
+  options              Json? // example : ["O(n)", "O(log n)", "O(n^2)", "O(1)"] 
+  correct_option_index Int
+  created_at           DateTime        @default(now())
+  mcqSubmissions       McqSubmission[]
+  contest_id           String
+  contest              Contest         @relation(fields: [contest_id], references: [id])
+}
+
+model DsaProblems {
+  id             String          @id @default(uuid())
+  title          String
+  description    String
+  tags           Json?
+  points         Int             @default(100)
+  time_limit     Int             @default(2000)
+  memory_limit   Int             @default(256)
+  created_at     DateTime        @default(now())
+  testCases      TestCases[]
+  dsaSubmissions DsaSubmission[]
+  contest_id     String
+  contest        Contest         @relation(fields: [contest_id], references: [id])
+}
+
+model TestCases {
+  id              String      @id @default(uuid())
+  input           String
+  expected_output String
+  is_hidden       Boolean     @default(false)
+  created_at      DateTime    @default(now())
+  problem_id      String
+  problem         DsaProblems @relation(fields: [problem_id], references: [id])
+}
+
+model McqSubmission {
+  id                    String       @id @default(uuid())
+  question_id           String
+  question              McqQuestions @relation(fields: [question_id], references: [id])
+  selected_option_index Int
+  is_correct            Boolean
+  points_earned         Int          @default(0)
+  submitted_at          DateTime
+  user_id               String
+  user                  User         @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, question_id])
+}
+
+model DsaSubmission {
+  id                String      @id @default(uuid())
+  problem_id        String
+  problem           DsaProblems @relation(fields: [problem_id], references: [id])
+  code              String
+  language          String
+  status            String
+  points_earned     Int         @default(0)
+  test_cases_passed Int         @default(0)
+  total_test_cases  Int         @default(0)
+  execution_time    Int
+  submitted_at      DateTime    @default(now())
+  user_id           String
+  user              User        @relation(fields: [user_id], references: [id])
+
+  @@unique([problem_id, user_id])
+}
+
+enum Role {
+  creator
+  contestee
+}
