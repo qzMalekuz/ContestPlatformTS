@@ -1,7 +1,17 @@
+interface JwtPayload {
+    id: number;
+    role: string;
+}
+
 declare global {
-    namespace express {
+    namespace Express {
         interface Request {
-            
+            user?: {
+                userId: string,
+                username: string
+            }
         }
     }
 }
+
+export { }
