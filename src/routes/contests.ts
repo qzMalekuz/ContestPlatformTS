@@ -66,6 +66,7 @@ router.post('/:contestId', authMiddleware, async(req: Request, res: Response) =>
                 dsaProblems: true
             }
         });
+        
 
         if(!contest) {
             return res.status(404).json({
