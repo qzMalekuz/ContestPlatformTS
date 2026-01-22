@@ -196,4 +196,8 @@ router.post('/:contestId/mcq', authMiddleware, async(req:Request, res: Response)
     }
 });
 
+// router.post('/:contestId/mcq/:questionId/submit', authMiddleware, async(req: Request, res: Response) => {
+    
+// });
+
 export default router;
