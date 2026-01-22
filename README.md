@@ -1,53 +1,69 @@
-🏆 Contest Platform Backend
+# 🏆 Contest Platform
 
-A Node.js + Express + PostgreSQL backend for a competitive programming contest platform.
-This project is designed to strictly follow API contracts and pass automated test suites.
+A robust full-featured backend for hosting competitive programming contests with MCQ and DSA challenges. Built with modern technologies for reliability, performance, and scalability.
 
-🚀 Tech Stack
+## ✨ Features
 
-Node.js
+- **Dual Challenge Types**: Support for MCQ (Multiple Choice) and DSA (Data Structures & Algorithms) problems
+- **Secure Authentication**: JWT-based stateless authentication with role-based access control
+- **Contest Management**: Create, manage, and track contests with multiple problems
+- **Submission Tracking**: Monitor user submissions, scores, and test case results
+- **Test Case Validation**: Custom test cases with hidden/visible options for DSA problems
+- **Password Security**: Industry-standard bcrypt password hashing
 
-Express
+## 🚀 Tech Stack
 
-TypeScript
+### Runtime & Framework
+- **Bun** - High-performance JavaScript runtime with built-in support for TypeScript
+- **Express.js** - Fast, minimal web framework for Node.js
+- **TypeScript** - Type-safe JavaScript for robust development
 
-PostgreSQL
+### Database & ORM
+- **PostgreSQL** - Powerful relational database
+- **Prisma v7.2** - Modern ORM with type-safe database access
+- **Prisma Adapter for PostgreSQL** - Optimized PostgreSQL connection adapter
 
-Prisma v7.2
+### Authentication & Security
+- **JWT (JSON Web Tokens)** - Secure stateless authentication mechanism
+- **bcrypt** - Password hashing with salt rounds for enhanced security
+- **Custom Auth Middleware** - Request-level authentication validation
 
-JWT (Authentication)
+### Validation & Type Safety
+- **Zod** - TypeScript-first schema validation for all API inputs
+- **TypeScript Types** - Strict type definitions for Express requests/responses
 
-bcrypt (Password hashing)
+### Configuration
+- **Dotenv** - Secure environment variable management
 
-Zod (Request validation)
+## 📁 Project Structure
 
-📁 Project Structure
-contest-platform/
-├── prisma/
-│   └── schema.prisma
-├── src/
-│   ├── index.ts
-│   ├── middleware/
-│   │   └── auth.ts
-│   ├── validators/
-│   │   └── schemas.ts
-│   └── routes/
-│       ├── auth.ts
-│       ├── contests.ts
-│       └── problems.ts
-├── .env
-├── package.json
-└── tsconfig.json
+```
+src/
+├── index.ts                 # Application entry point
+├── routes/
+│   ├── auth.ts             # Authentication endpoints
+│   ├── contests.ts         # Contest management
+│   └── problems.ts         # Problem & submission handling
+├── middleware/
+│   └── authMiddleware.ts    # JWT authentication
+├── validators/
+│   └── schemas.ts          # Zod validation schemas
+├── lib/
+│   └── prisma.ts           # Prisma client setup
+└── generated/prisma/       # Auto-generated Prisma types
 
-👥 User Roles
+prisma/
+├── schema.prisma           # Database schema
+└── migrations/             # Migration history
+```
 
-creator – Creates contests, MCQs, and DSA problems
+## 👥 User Roles
 
-contestee – Participates and submits solutions
+- **creator** – Creates and manages contests, MCQs, and DSA problems
+- **contestee** – Participates in contests and submits solutions
+- **Default Role**: contestee (assigned if no role specified during signup)
 
-If no role is provided during signup, the default role is contestee.
-
-🔐 Authentication
+## 🔐 Authentication
 
 JWT-based authentication
 
