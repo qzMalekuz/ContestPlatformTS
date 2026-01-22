@@ -30,7 +30,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
         req.user = {
             userId: decoded.userId,
-            username: decoded.username
+            username: decoded.username,
+            role: decoded.role as string
         }
         next();
         
