@@ -5,6 +5,7 @@ import { schemas } from "../validators/schemas";
 
 const router = Router();
 
+// QUESTION - 3
 
 router.post('/', authMiddleware, async(req: Request, res: Response) => {
     try {
@@ -61,6 +62,7 @@ router.post('/', authMiddleware, async(req: Request, res: Response) => {
     }
 });
 
+// QUESTION - 4
 
 router.get('/:contestId', authMiddleware, async(req: Request, res: Response) => {
     try {
@@ -133,6 +135,7 @@ router.get('/:contestId', authMiddleware, async(req: Request, res: Response) => 
     }
 });
 
+// QUESTION - 5
 
 router.post('/:contestId/mcq', authMiddleware, async(req:Request, res: Response) => {
     try {
@@ -207,6 +210,7 @@ router.post('/:contestId/mcq', authMiddleware, async(req:Request, res: Response)
     }
 });
 
+// QUESTION - 6
 
 router.post('/:contestId/mcq/:questionId/submit', authMiddleware, async(req: Request, res: Response) => {
     try {
