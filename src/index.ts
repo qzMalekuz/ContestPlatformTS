@@ -15,8 +15,6 @@ app.use('/api/contests', contestRoutes);
 app.use('/api/problems', problemRoutes);
 
 
-
-
 app.listen(port, () => {
     console.log(`Listening to Aujla on port ${port}`);
 });
