@@ -3,8 +3,6 @@ import jwt, { type JwtPayload } from "jsonwebtoken";
 
 const jwtSecret = process.env.JWT_SECRET;
 
-// authmiddleware added
-
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
 
     try {
@@ -23,7 +21,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
             return res.status(401).json({
                 success: false,
                 data: null,
-                error: 'UNAUTHORIZED'
+                error: 'unauthorized'
             });
         }
 
