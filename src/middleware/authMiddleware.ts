@@ -25,6 +25,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
             });
         }
 
+        // token port added
+
         const token = parts[1];
         const decoded = jwt.verify(token, jwtSecret as string) as JwtPayload;
 
