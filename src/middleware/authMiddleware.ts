@@ -6,6 +6,9 @@ const jwtSecret = process.env.JWT_SECRET;
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
 
     try {
+
+        //header added 
+
         const header = req.headers.authorization;
         if (!header) {
             return res.status(401).json({
