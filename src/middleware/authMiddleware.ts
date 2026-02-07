@@ -7,8 +7,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
     try {
 
-        //header added 
-
         const header = req.headers.authorization;
         if (!header) {
             return res.status(401).json({
@@ -27,8 +25,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
                 error: 'unauthorized'
             });
         }
-
-        // token port added
 
         const token = parts[1];
         const decoded = jwt.verify(token, jwtSecret as string) as JwtPayload;
