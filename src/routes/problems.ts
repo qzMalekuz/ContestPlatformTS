@@ -114,61 +114,54 @@ router.post('/:problemId/submit', authMiddleware, async (req: Request, res: Resp
         let testCasesPassed = 0;
         let status = "accepted";
 
-        // Determine submission status based on code analysis
-        // Check for patterns that indicate specific statuses
 
-        const codeLC = code.toLowerCase();
+        // Real evaluation via Judge0 API
+        const LANGUAGE_MAP: Record<string, number> = {
+            'javascript': 93,
+            'python': 92,
+            'python3': 92,
+            'java': 91,
+            'c++': 54,
+            'cpp': 54,
+            'c': 50
+        };
 
-        // Check for runtime error patterns
-        const hasRuntimeError = code.includes('.nonExistentMethod()') ||
-            code.includes('null;') && code.includes('.property') ||
-            (code.includes('return [0, 1];') && code.trim().endsWith('`'));
+        const languageId = LANGUAGE_MAP[language.toLowerCase()] || 93;
 
-        // Check for syntax error patterns (unclosed braces, missing closing)
-        const openBraces = (code.match(/{/g) || []).length;
-        const closeBraces = (code.match(/}/g) || []).length;
-        const hasSyntaxError = openBraces > closeBraces;
+        const judge0Requests = testCases.map(tc => {
+            return fetch('https://ce.judge0.com/submissions?base64_encoded=false&wait=true', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    source_code: code,
+                    language_id: languageId,
+                    stdin: tc.input || "",
+                    expected_output: tc.expected_output || "",
+                    cpu_time_limit: (problem.time_limit / 1000.0) || 2.0,
+                    memory_limit: (problem.memory_limit * 1024) || 128000
+                })
+            }).then(res => res.json()).catch(err => {
+                console.error("Judge0 API Error:", err);
+                return { status: { id: 13, description: "Internal Error" } };
+            });
+        });
 
-        // Check for time limit exceeded patterns
-        const hasTLE = code.includes('10000000') ||
-            (code.includes('for') && code.includes('for') && code.includes('busy wait'));
+        const results = await Promise.all(judge0Requests);
 
-        // Check for wrong answer patterns (overly simple solutions)
-        const isAlwaysReturn01 = code.includes('return [0, 1]') &&
-            !code.includes('for') &&
-            !code.includes('map');
+        for (const result of results as any[]) {
+            const statusId = result.status?.id;
 
-        // Check for correct/optimal solution patterns
-        const hasHashMapSolution = code.includes('map[') || code.includes('map =');
-        const hasBruteForce = code.includes('for') && code.includes('for') && !hasTLE;
-
-        if (hasRuntimeError || hasSyntaxError) {
-            status = "runtime_error";
-            testCasesPassed = 0;
-        } else if (hasTLE) {
-            status = "time_limit_exceeded";
-            testCasesPassed = 0;
-        } else if (isAlwaysReturn01) {
-            status = "wrong_answer";
-            testCasesPassed = Math.max(0, totalTestCases - 1);
-        } else if (hasHashMapSolution) {
-            status = "accepted";
-            testCasesPassed = totalTestCases;
-        } else if (hasBruteForce) {
-            // Partial or full pass depending on complexity
-            if (code.includes('Math.min')) {
-                // Limited brute force - partial pass
-                testCasesPassed = Math.max(1, totalTestCases - 1);
-                status = testCasesPassed === totalTestCases ? "accepted" : "wrong_answer";
+            if (statusId === 3) {
+                testCasesPassed++;
             } else {
-                // Full brute force - passes all
-                status = "accepted";
-                testCasesPassed = totalTestCases;
+                if (status === 'accepted') {
+                    if (statusId === 4) status = 'wrong_answer';
+                    else if (statusId === 5) status = 'time_limit_exceeded';
+                    else status = 'runtime_error'; // covers 6, 7-12, 13, 14
+                }
             }
-        } else {
-            // Default: accepted with all test cases
-            status = "accepted";
-            testCasesPassed = totalTestCases;
         }
 
         if (totalTestCases === 0) {

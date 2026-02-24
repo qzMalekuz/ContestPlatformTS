@@ -503,10 +503,10 @@ router.get('/:contestId/leaderboard', authMiddleware, async (req: Request, res: 
         // Assign ranks
         let currentRank = 1;
         for (let i = 0; i < leaderboard.length; i++) {
-            if (i > 0 && leaderboard[i].totalPoints < leaderboard[i - 1].totalPoints) {
+            if (i > 0 && leaderboard[i]!.totalPoints < leaderboard[i - 1]!.totalPoints) {
                 currentRank = i + 1; // Standard ranking (1, 2, 2, 4)
             }
-            leaderboard[i].rank = currentRank;
+            leaderboard[i]!.rank = currentRank;
         }
 
         return res.status(200).json({
