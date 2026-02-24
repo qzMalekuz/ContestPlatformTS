@@ -478,9 +478,20 @@ router.get('/:contestId/leaderboard', authMiddleware, async (req: Request, res: 
         // Fetch all names
         await Promise.all(Object.keys(userPoints).map(fetchUserName));
 
+        // Helper: convert UUID to a stable numeric ID
+        const uuidToNumber = (uuid: string): number => {
+            let hash = 0;
+            for (let i = 0; i < uuid.length; i++) {
+                const char = uuid.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return Math.abs(hash);
+        };
+
         // Format into array
         let leaderboard = Object.entries(userPoints).map(([userId, totalPoints]) => ({
-            userId,
+            userId: uuidToNumber(userId),
             name: userNames[userId] || "Unknown User",
             totalPoints,
             rank: 0 // Will assign below

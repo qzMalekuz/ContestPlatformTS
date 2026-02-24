@@ -18,11 +18,11 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
         const parts = header.split(' ');
 
-        if(parts.length !== 2 || parts[0] !== 'Bearer' ||parts[1] == undefined) {
+        if (parts.length !== 2 || parts[0] !== 'Bearer' || parts[1] == undefined) {
             return res.status(401).json({
                 success: false,
                 data: null,
-                error: 'unauthorized'
+                error: 'UNAUTHORIZED'
             });
         }
 
@@ -35,7 +35,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
             role: decoded.role as string
         }
         next();
-        
+
     } catch (err) {
         return res.status(401).json({
             success: false,
