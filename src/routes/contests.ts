@@ -7,11 +7,11 @@ const router = Router();
 
 // QUESTION - 3
 
-router.post('/', authMiddleware, async(req: Request, res: Response) => {
+router.post('/', authMiddleware, async (req: Request, res: Response) => {
     try {
 
         const validation = schemas.CreateContestSchema.safeParse(req.body);
-        if(!validation.success) {
+        if (!validation.success) {
             return res.status(400).json({
                 success: false,
                 data: null,
@@ -64,7 +64,7 @@ router.post('/', authMiddleware, async(req: Request, res: Response) => {
 
 // QUESTION - 4
 
-router.get('/:contestId', authMiddleware, async(req: Request, res: Response) => {
+router.get('/:contestId', authMiddleware, async (req: Request, res: Response) => {
     try {
         const contestId = req.params.contestId as string;
 
@@ -76,7 +76,7 @@ router.get('/:contestId', authMiddleware, async(req: Request, res: Response) => 
             }
         });
 
-        if(!contest) {
+        if (!contest) {
             return res.status(404).json({
                 success: false,
                 data: null,
@@ -137,13 +137,13 @@ router.get('/:contestId', authMiddleware, async(req: Request, res: Response) => 
 
 // QUESTION - 5
 
-router.post('/:contestId/mcq', authMiddleware, async(req:Request, res: Response) => {
+router.post('/:contestId/mcq', authMiddleware, async (req: Request, res: Response) => {
     try {
 
         const contestId = req.params.contestId as string;
 
         const validation = schemas.CreateMCQSchema.safeParse(req.body);
-        if(!validation.success) {
+        if (!validation.success) {
             return res.status(400).json({
                 success: false,
                 data: null,
@@ -163,7 +163,7 @@ router.post('/:contestId/mcq', authMiddleware, async(req:Request, res: Response)
             where: { id: contestId }
         });
 
-        if(!contest) {
+        if (!contest) {
             return res.status(404).json({
                 success: false,
                 data: null,
@@ -171,7 +171,7 @@ router.post('/:contestId/mcq', authMiddleware, async(req:Request, res: Response)
             });
         }
 
-        if(contest.creator_id !== req.user?.userId) {
+        if (contest.creator_id !== req.user?.userId) {
             return res.status(403).json({
                 success: false,
                 data: null,
@@ -212,12 +212,12 @@ router.post('/:contestId/mcq', authMiddleware, async(req:Request, res: Response)
 
 // QUESTION - 6
 
-router.post('/:contestId/mcq/:questionId/submit', authMiddleware, async(req: Request, res: Response) => {
+router.post('/:contestId/mcq/:questionId/submit', authMiddleware, async (req: Request, res: Response) => {
     try {
         const { contestId, questionId } = req.params;
 
         const validation = schemas.SubmitMCQSchema.safeParse(req.body);
-        if(!validation.success) {
+        if (!validation.success) {
             return res.status(400).json({
                 success: false,
                 data: null,
@@ -230,7 +230,7 @@ router.post('/:contestId/mcq/:questionId/submit', authMiddleware, async(req: Req
             where: { id: contestId as string }
         });
 
-        if(!contest) {
+        if (!contest) {
             return res.status(404).json({
                 success: false,
                 data: null,
@@ -259,10 +259,10 @@ router.post('/:contestId/mcq/:questionId/submit', authMiddleware, async(req: Req
 
 
         const question = await prisma.mcqQuestions.findUnique({
-            where: { id: questionId as string}
+            where: { id: questionId as string }
         });
 
-        if(!question || question.contest_id !== contestId) {
+        if (!question || question.contest_id !== contestId) {
             return res.status(404).json({
                 success: false,
                 data: null,
@@ -293,7 +293,7 @@ router.post('/:contestId/mcq/:questionId/submit', authMiddleware, async(req: Req
         const isCorrect = selectedOptionIndex === question.correct_option_index;
         let pointsEarned = 0;
         if (isCorrect) {
-        pointsEarned = question.points;
+            pointsEarned = question.points;
         }
 
 
@@ -319,6 +319,89 @@ router.post('/:contestId/mcq/:questionId/submit', authMiddleware, async(req: Req
 
     } catch (err) {
         console.error('Submit MCQ error:', err);
+        return res.status(500).json({
+            success: false,
+            data: null,
+            error: "INTERNAL_SERVER_ERROR"
+        });
+    }
+});
+
+// QUESTION - 7
+
+router.post('/:contestId/dsa', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const contestId = req.params.contestId as string;
+
+        const validation = schemas.CreateDSAProblemSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "INVALID_REQUEST"
+            });
+        }
+
+        if (req.user?.role !== 'creator') {
+            return res.status(403).json({
+                success: false,
+                data: null,
+                error: "FORBIDDEN"
+            });
+        }
+
+        const contest = await prisma.contest.findUnique({
+            where: { id: contestId }
+        });
+
+        if (!contest) {
+            return res.status(404).json({
+                success: false,
+                data: null,
+                error: "CONTEST_NOT_FOUND"
+            });
+        }
+
+        if (contest.creator_id !== req.user?.userId) {
+            return res.status(403).json({
+                success: false,
+                data: null,
+                error: "FORBIDDEN"
+            });
+        }
+
+        const { title, description, tags, points, timeLimit, memoryLimit, testCases } = validation.data;
+
+        const problem = await prisma.dsaProblems.create({
+            data: {
+                title,
+                description,
+                tags: tags || [],
+                points: points || 100,
+                time_limit: timeLimit || 2000,
+                memory_limit: memoryLimit || 256,
+                contest_id: contestId,
+                testCases: {
+                    create: testCases.map(tc => ({
+                        input: tc.input,
+                        expected_output: tc.expectedOutput,
+                        is_hidden: tc.isHidden
+                    }))
+                }
+            }
+        });
+
+        return res.status(201).json({
+            success: true,
+            data: {
+                id: problem.id,
+                contestId: problem.contest_id
+            },
+            error: null
+        });
+
+    } catch (err) {
+        console.error('Create DSA problem error:', err);
         return res.status(500).json({
             success: false,
             data: null,
