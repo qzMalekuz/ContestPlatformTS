@@ -410,4 +410,109 @@ router.post('/:contestId/dsa', authMiddleware, async (req: Request, res: Respons
     }
 });
 
+// QUESTION - 10
+
+router.get('/:contestId/leaderboard', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const contestId = req.params.contestId as string;
+
+        const contest = await prisma.contest.findUnique({
+            where: { id: contestId },
+            include: {
+                mcqQuestions: {
+                    include: { mcqSubmissions: true }
+                },
+                dsaProblems: {
+                    include: { dsaSubmissions: true }
+                }
+            }
+        });
+
+        if (!contest) {
+            return res.status(404).json({
+                success: false,
+                data: null,
+                error: "CONTEST_NOT_FOUND"
+            });
+        }
+
+        // Aggregate points per user
+        const userPoints: Record<string, number> = {};
+        const userNames: Record<string, string> = {};
+
+        // Helper to fetch user profiles (batching would be better, but doing it simple)
+        const fetchUserName = async (userId: string) => {
+            if (!userNames[userId]) {
+                const user = await prisma.user.findUnique({ where: { id: userId } });
+                if (user) userNames[userId] = user.name;
+            }
+            return userNames[userId];
+        };
+
+        // 1. Sum all MCQ points
+        for (const mcq of contest.mcqQuestions) {
+            for (const sub of mcq.mcqSubmissions) {
+                userPoints[sub.user_id] = (userPoints[sub.user_id] || 0) + sub.points_earned;
+            }
+        }
+
+        // 2. Sum max points for each DSA problem
+        for (const problem of contest.dsaProblems) {
+            const problemMaxPoints: Record<string, number> = {};
+
+            // Track max points per user for this specific problem
+            for (const sub of problem.dsaSubmissions) {
+                problemMaxPoints[sub.user_id] = Math.max(
+                    problemMaxPoints[sub.user_id] || 0,
+                    sub.points_earned
+                );
+            }
+
+            // Add these max points to total user points
+            for (const [userId, points] of Object.entries(problemMaxPoints)) {
+                userPoints[userId] = (userPoints[userId] || 0) + points;
+            }
+        }
+
+
+        // Fetch all names
+        await Promise.all(Object.keys(userPoints).map(fetchUserName));
+
+        // Format into array
+        let leaderboard = Object.entries(userPoints).map(([userId, totalPoints]) => ({
+            userId,
+            name: userNames[userId] || "Unknown User",
+            totalPoints,
+            rank: 0 // Will assign below
+        }));
+
+        // Sort descending
+        leaderboard.sort((a, b) => b.totalPoints - a.totalPoints);
+
+        // Assign ranks
+        let currentRank = 1;
+        for (let i = 0; i < leaderboard.length; i++) {
+            if (i > 0 && leaderboard[i].totalPoints < leaderboard[i - 1].totalPoints) {
+                currentRank = i + 1; // Standard ranking (1, 2, 2, 4)
+            }
+            leaderboard[i].rank = currentRank;
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: leaderboard,
+            error: null
+        });
+
+
+    } catch (err) {
+        console.error('Get leaderboard error:', err);
+        return res.status(500).json({
+            success: false,
+            data: null,
+            error: "INTERNAL_SERVER_ERROR"
+        });
+    }
+});
+
 export default router;
