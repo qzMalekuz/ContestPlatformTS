@@ -129,7 +129,7 @@ router.post('/:problemId/submit', authMiddleware, async (req: Request, res: Resp
         const languageId = LANGUAGE_MAP[language.toLowerCase()] || 93;
 
         const judge0Requests = testCases.map(tc => {
-            return fetch('https://ce.judge0.com/submissions?base64_encoded=false&wait=true', {
+            return fetch('https://judge0.nagmaniupadhyay.com.np/submissions?base64_encoded=false&wait=true', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
